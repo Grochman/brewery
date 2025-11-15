@@ -8,15 +8,15 @@ from abc import ABC, abstractmethod
 class Sensor(ABC):
     _id_counter = 0
 
-    def __init__(self, sleepLowerBound=0.1, sleepUpperBound=1, broker="broker.hivemq.com", port=1883):
+    def __init__(self, sleepLowerBound=0.1, sleepUpperBound=1, broker="localhost", port=9001):
         self._sleepLowerBound = sleepLowerBound
         self._sleepUpperBound = sleepUpperBound
-        self._client = mqtt.Client(protocol=mqtt.MQTTv311)
-        self._client.connect(broker, port)
-        self._topic = "DEFAULT"
         Sensor._id_counter += 1
         self._id = Sensor._id_counter
-
+        self._client = mqtt.Client()
+        self._client.connect(broker, port)
+        self._topic = "topic/topic"        
+        
     def __del__(self):
         self._client.disconnect()
 
@@ -27,7 +27,8 @@ class Sensor(ABC):
 
     def stop(self):
         self._isRunning = False
-        self._thread.join()
+        if hasattr(self, "_thread") and self._thread.is_alive():
+            self._thread.join()
 
     def generateValue(self, value):
         self._client.publish(self._topic, value)
@@ -51,7 +52,7 @@ class Sensor(ABC):
 
 
 class TemperatureSensor(Sensor):
-    def __init__(self, sleepLowerBound=1, sleepUpperBound=10, broker="broker.hivemq.com", port=1883):
+    def __init__(self, sleepLowerBound=1, sleepUpperBound=10, broker="localhost", port=9001):
         super().__init__(sleepLowerBound, sleepUpperBound, broker, port)
         self._topic = "TEMPERATURE"
         
@@ -59,7 +60,7 @@ class TemperatureSensor(Sensor):
         return math.sin(t)
 
 class PressureSensor(Sensor):
-    def __init__(self, sleepLowerBound=1, sleepUpperBound=10, broker="broker.hivemq.com", port=1883):
+    def __init__(self, sleepLowerBound=1, sleepUpperBound=10, broker="localhost", port=9001):
         super().__init__(sleepLowerBound, sleepUpperBound, broker, port)
         self._topic = "PRESSURE"
         
@@ -67,7 +68,7 @@ class PressureSensor(Sensor):
         return math.cos(t)
 
 class Co2Sensor(Sensor):
-    def __init__(self, sleepLowerBound=1, sleepUpperBound=10, broker="broker.hivemq.com", port=1883):
+    def __init__(self, sleepLowerBound=1, sleepUpperBound=10, broker="localhost", port=9001):
         super().__init__(sleepLowerBound, sleepUpperBound, broker, port)
         self._topic = "C02"
         
@@ -75,10 +76,9 @@ class Co2Sensor(Sensor):
         return math.tan(t)
 
 class DissolvedOxygenSensor(Sensor):
-    def __init__(self, sleepLowerBound=1, sleepUpperBound=10, broker="broker.hivemq.com", port=1883):
+    def __init__(self, sleepLowerBound=1, sleepUpperBound=10, broker="localhost", port=9001):
         super().__init__(sleepLowerBound, sleepUpperBound, broker, port)
         self._topic = "DISSOLVED_OXYGEN"
         
     def _productionFunction(self, t):
         return math.cos(t) * 2
-
